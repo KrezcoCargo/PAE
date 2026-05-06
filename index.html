@@ -811,7 +811,9 @@ const NAV_ITEMS = {
   ]
 };
 
-let SCHOOLS=[], CFG={clienteNombre:'Cliente',programa:'Programa',fechaInicioISO:'',diasTotal:10};
+let SCHOOLS=[], CFG={clienteNombre:'World Vision Ecuador',programa:'Programa',fechaInicioISO:'',diasTotal:10};
+// Nombre forzado — sobreescribe cualquier valor que venga del servidor
+const FORCED_CLIENT_NAME = 'World Vision Ecuador';
 let ST={scope:'DAY',prov:'ALL',est:'ALL',dia:1,q:''};
 let SESSION=null;
 let currentPage='dashboard';
@@ -937,6 +939,7 @@ function startAutoRefresh(){
       // New data available — update silently
       SCHOOLS = remote.schools;
       CFG = Object.assign(CFG, remote.cfg||{});
+      CFG.clienteNombre = FORCED_CLIENT_NAME;
       localStorage.setItem('kc_data', JSON.stringify(Object.assign({},remote,{updatedAt:remote.updatedAt||''})));
       _lastDataHash = newHash;
       initDashboard();
@@ -1147,6 +1150,7 @@ function loadFromStorage(){
   try{
     const raw=localStorage.getItem('kc_data');
     if(raw){const o=JSON.parse(raw);SCHOOLS=o.schools||[];CFG=Object.assign(CFG,o.cfg||{});
+      CFG.clienteNombre = FORCED_CLIENT_NAME;
       if(SCHOOLS.length>0){
         setField('cfg-cliente',CFG.clienteNombre);setField('cfg-programa',CFG.programa);
         setField('cfg-fecha',CFG.fechaInicioISO);setField('cfg-dias',CFG.diasTotal);
@@ -1163,6 +1167,7 @@ async function loadFromGitHubThenRender(){
   const remote=await fetchFromGitHub();
   if(remote&&remote.schools&&remote.schools.length>0){
     SCHOOLS=remote.schools;CFG=Object.assign(CFG,remote.cfg||{});
+    CFG.clienteNombre = FORCED_CLIENT_NAME;
     // Cache locally
     localStorage.setItem('kc_data',JSON.stringify(Object.assign({},remote,{updatedAt:remote.updatedAt||new Date().toLocaleString('es-EC')})));
     setField('cfg-cliente',CFG.clienteNombre);setField('cfg-programa',CFG.programa);
