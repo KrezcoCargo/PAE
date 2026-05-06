@@ -1227,9 +1227,10 @@ function loadFile(file){
     try{
       const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array',cellDates:true});
 
-      // Find best sheet: prefer BBD PESOS (has Día), then IE, then first non-config
-      const SKIP=['CONFIG','PLANIFICACION','PESOS TOTAL'];
-      let sheetName = wb.SheetNames.find(n=>n.toUpperCase()==='BBD PESOS')
+      // Find best sheet: prefer PLANIFICACION (has DÍA, ESTADO, AMIE), then BBD PESOS, then first non-config
+      const SKIP=['CONFIG','PESOS TOTAL'];
+      let sheetName = wb.SheetNames.find(n=>n.toUpperCase()==='PLANIFICACION')
+        || wb.SheetNames.find(n=>n.toUpperCase()==='BBD PESOS')
         || wb.SheetNames.find(n=>n.toUpperCase()==='IE')
         || wb.SheetNames.find(n=>!SKIP.includes(n.toUpperCase()))
         || wb.SheetNames[0];
@@ -1324,7 +1325,8 @@ function mapRow(row){
 
   const est=nvI(['total','estudiantes','totalestud','numestudiantes'],0);
   const rac=nvI(['raciones','totalraciones','racion','numraciones'],est*20);
-  const peso=nvF(['pesokg','peso','pesototal'],est*4.12);
+  const pesoTon=nvF(['pesostoneladas','pesos_toneladas','pesonton'],null);
+  const peso=pesoTon!=null?pesoTon*1000:nvF(['pesokg','peso','pesototal'],est*4.12);
 
   // DIA — very broad detection
   const diaRaw=nv([
@@ -1332,7 +1334,8 @@ function mapRow(row){
     'dia','diaprogramado','diaentrega','diadistribucion','ndiaentrega',
     'ndia','numerodedia','ndiadistribucion','diaruta','programaciondia',
     'diaoperacion','nrodedia','numdia','ndiaprogramado','diadistrib',
-    // the actual column found: 'Día' -> 'dia' already covered
+    'ndia','ndiaentrega','ndiaprogramado',
+    // the actual column found: 'Día' -> 'dia' already covered above
   ]);
   let dia=1;
   if(diaRaw!=null){
@@ -1340,10 +1343,11 @@ function mapRow(row){
     if(!isNaN(parsed)&&parsed>0)dia=parsed;
   }
 
-  const eRaw=nvS(['estado','statuentrega','status','statusentrega'],'pendiente').toLowerCase().replace(/\s+/g,'_');
+  const eRaw=nvS(['estado','statuentrega','status','statusentrega'],'pendiente').toLowerCase().trim().replace(/\s+/g,'_');
   const eMap={entregada:'entregada',entregado:'entregada',delivered:'entregada',
                en_ruta:'en_ruta',enruta:'en_ruta',ruta:'en_ruta',
-               pendiente:'pendiente',pending:'pendiente',
+               en_Ruta:'en_ruta',
+               pendiente:'pendiente',pending:'pendiente',noprogramado:'pendiente',
                problema:'problema',problem:'problema',novedad:'problema'};
   const estado=eMap[eRaw]||'pendiente';
 
