@@ -517,6 +517,13 @@ tr:hover td{background:#FBFBFD;}
             <select id="cantones-select" onchange="applyMapFiltersFull()"><option value="">Todos los cantones</option></select>
           </div>
 
+          <div class="map-filter-group" id="fil-estado-group" style="display:none">
+            <label class="group-title">📦 Estado de entrega</label>
+            <label class="filter-row"><input type="checkbox" id="fil-est-entregada" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#1F9D55"></span>Entregada</label>
+            <label class="filter-row"><input type="checkbox" id="fil-est-en_ruta" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#F47C20"></span>En ruta</label>
+            <label class="filter-row"><input type="checkbox" id="fil-est-pendiente" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#9AA4B8"></span>Pendiente</label>
+            <label class="filter-row"><input type="checkbox" id="fil-est-problema" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#EF4444"></span>Problema</label>
+          </div>
           <div class="map-filter-group">
             <label class="group-title">📋 Régimen</label>
             <label class="filter-row"><input type="checkbox" id="fil-reg-SIERRA" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#0277BD"></span>Sierra</label>
@@ -1824,7 +1831,11 @@ function renderMapMarkers(){
     const coordMap={};
     MAP_SCHOOLS.forEach(s=>{coordMap[s.amie]=s;});
 
-    const {regs,accs,zins}=getActiveFilters();
+    const {regs,accs,zins,ests}=getActiveFilters();
+    // Mostrar el panel de filtro de estado
+    const estGrp=document.getElementById('fil-estado-group');
+    if(estGrp)estGrp.style.display='';
+
     const provGroups={};
     SCHOOLS.forEach(s=>{
       const ref=coordMap[s.amie];
@@ -1834,6 +1845,8 @@ function renderMapMarkers(){
       const accVal=s.acceso||ref.acc||'Terrestre';
       if(accs.length&&!accs.includes(accVal))return;
       if(zins.length&&!zins.includes(ref.zona))return;
+      const estadoVal=s.estado||'pendiente';
+      if(ests.length&&!ests.includes(estadoVal))return;
       if(!provGroups[s.prov])provGroups[s.prov]=[];
       provGroups[s.prov].push({...s,lat:ref.lat,lon:ref.lon,
         name:ref.name||s.nombre||s.amie,
@@ -1872,6 +1885,8 @@ function renderMapMarkers(){
     buildMapLegendEstado();
   } else {
     /* MODO ESTÁTICO: catálogo MAP_SCHOOLS sin datos de entrega */
+    const estGrp2=document.getElementById('fil-estado-group');
+    if(estGrp2)estGrp2.style.display='none';
     _activeProvinces=new Set(MAP_PROVINCES);
     MAP_PROVINCES.forEach(prov=>{
       const color=MAP_PCOLORS[prov];
@@ -1962,11 +1977,12 @@ function applyMapFilters(){
 
 
 function getActiveFilters(){
-  const regs=[], accs=[], zins=[];
+  const regs=[], accs=[], zins=[], ests=[];
   ['SIERRA','COSTA'].forEach(v=>{const el=document.getElementById('fil-reg-'+v); if(el&&el.checked)regs.push(v);});
   ['Terrestre','Fluvial','Aérea'].forEach(v=>{const el=document.getElementById('fil-acc-'+v); if(el&&el.checked)accs.push(v);});
   ['Urbana','Rural'].forEach(v=>{const el=document.getElementById('fil-zin-'+v); if(el&&el.checked)zins.push(v);});
-  return {regs,accs,zins};
+  ['entregada','en_ruta','pendiente','problema'].forEach(v=>{const el=document.getElementById('fil-est-'+v); if(el&&el.checked)ests.push(v);});
+  return {regs,accs,zins,ests};
 }
 
 function applyMapFiltersFull(){
@@ -1987,6 +2003,7 @@ function resetMapFilters(){
   ['SIERRA','COSTA'].forEach(v=>{const el=document.getElementById('fil-reg-'+v);if(el)el.checked=true;});
   ['Terrestre','Fluvial','Aérea'].forEach(v=>{const el=document.getElementById('fil-acc-'+v);if(el)el.checked=true;});
   ['Urbana','Rural'].forEach(v=>{const el=document.getElementById('fil-zin-'+v);if(el)el.checked=true;});
+  ['entregada','en_ruta','pendiente','problema'].forEach(v=>{const el=document.getElementById('fil-est-'+v);if(el)el.checked=true;});
   MAP_PROVINCES.forEach(p=>{const chk=document.getElementById('chk-'+p);if(chk)chk.checked=true;});
   renderMapMarkers();
 }
