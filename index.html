@@ -229,6 +229,13 @@ tr:hover td{background:#FBFBFD;}
 .s-en_ruta{background:var(--orange-bg);color:var(--orange);}
 .s-pendiente{background:var(--gray-bg);color:var(--gray-600);}
 .s-problema{background:var(--red-bg);color:var(--red);}
+.estado-sel{border:none;outline:none;border-radius:999px;font-size:9px;font-weight:700;text-transform:uppercase;padding:2px 20px 2px 9px;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center;transition:box-shadow .15s;}
+.estado-sel:hover{box-shadow:0 0 0 2px currentColor;}
+.estado-sel:focus{box-shadow:0 0 0 2px currentColor;}
+.estado-sel.s-entregada{background-color:var(--green-lite);color:var(--green);}
+.estado-sel.s-en_ruta{background-color:var(--orange-bg);color:var(--orange);}
+.estado-sel.s-pendiente{background-color:var(--gray-bg);color:var(--gray-600);}
+.estado-sel.s-problema{background-color:var(--red-bg);color:var(--red);}
 .atag{font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;}
 .aT{background:#E8ECF7;color:var(--navy);}
 .aA{background:var(--orange-bg);color:var(--orange);}
@@ -1492,6 +1499,27 @@ function renderTonChart(){
     </div>`;
 }
 
+function changeEstado(sel){
+  const [amie,dia]=sel.dataset.key.split('|');
+  const diaNum=parseInt(dia);
+  const s=SCHOOLS.find(x=>x.amie===amie&&x.dia===diaNum);
+  if(!s)return;
+  const prev=s.estado;
+  s.estado=sel.value;
+  // update select class for color
+  sel.className='estado-sel s-'+sel.value;
+  // update the underlying row's TR class if needed (optional)
+  saveToStorage();
+  // re-render stats without rebuilding the whole table (avoids losing scroll position)
+  renderDiaTrack();renderRaciones();renderKpis();renderProvBars();renderDonut();renderTonChart();
+  // if filtering by status and this row no longer matches, re-render table
+  if(ST.est!=='ALL'&&ST.est!==sel.value){renderTable();}
+  // auto-publish
+  const dataPayload={schools:SCHOOLS,cfg:CFG,updatedAt:new Date().toLocaleString('es-EC')};
+  publishToGitHub(dataPayload);
+  showToast(`✓ ${amie} → ${sel.value}`);
+}
+
 function renderAll(){renderDiaTrack();renderRaciones();renderKpis();renderProvBars();renderDonut();renderTonChart();renderTable();}
 
 function syncDP(){
@@ -1607,6 +1635,16 @@ function renderTable(){
   const CAP=300,disp=rows.slice(0,CAP);
   const aClass={'Terrestre':'aT','Aérea':'aA','Fluvial':'aF'};
   const sL={entregada:'Entregada',en_ruta:'En ruta',pendiente:'Pendiente',problema:'Problema'};
+  const mkSel=(s)=>{
+    const opts=[
+      {v:'entregada',l:'✓ Entregada'},
+      {v:'en_ruta',l:'↗ En ruta'},
+      {v:'pendiente',l:'○ Pendiente'},
+      {v:'problema',l:'✕ Problema'}
+    ].map(o=>`<option value="${o.v}"${s.estado===o.v?' selected':''}>${o.l}</option>`).join('');
+    const key=esc(s.amie)+'|'+s.dia;
+    return `<select class="estado-sel s-${s.estado}" data-key="${key}" onchange="changeEstado(this)">${opts}</select>`;
+  };
   document.getElementById('tbody').innerHTML=disp.map(s=>`<tr>
     <td><span class="amiec">${esc(s.amie)}</span></td>
     <td><div class="sname" title="${esc(s.nombre)}">${esc(s.nombre)}</div><div class="muted">${esc(s.prov)}</div></td>
@@ -1615,7 +1653,7 @@ function renderTable(){
     <td style="text-align:right;font-weight:600">${s.estudiantes.toLocaleString('es-EC')}</td>
     <td style="text-align:right;font-weight:600">${(s.peso_kg/1000).toFixed(2)}<span class="muted"> T</span></td>
     <td style="text-align:right;font-weight:600">${s.raciones.toLocaleString('es-EC')}</td>
-    <td><span class="spill s-${s.estado}">${sL[s.estado]||s.estado}</span>${s.notas?`<div class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📌 ${esc(s.notas)}</div>`:''}</td>
+    <td>${mkSel(s)}${s.notas?`<div class="muted" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">📌 ${esc(s.notas)}</div>`:''}</td>
     <td><div style="font-weight:600;font-size:10px">${fmtS(d2i(s.dia))}<div class="muted">Día ${s.dia}${s.hora?' · '+esc(s.hora):''}</div></div></td>
     <td style="font-size:10px;color:var(--gray-600)">${esc(s.transportista||'—')}${s.placa?`<div class="muted">${esc(s.placa)}</div>`:''}</td>
   </tr>`).join('');
