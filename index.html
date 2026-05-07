@@ -327,6 +327,7 @@ tr:hover td{background:#FBFBFD;}
 .map-filter-group .filter-row{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:11px;color:var(--navy);cursor:pointer;}
 .map-filter-group .filter-row input[type=checkbox]{accent-color:var(--orange);width:13px;height:13px;cursor:pointer;flex-shrink:0;}
 .map-filter-row-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.filter-count{margin-left:auto;font-size:10px;font-weight:700;color:#fff;background:var(--navy-soft);border-radius:10px;padding:1px 6px;min-width:22px;text-align:center;}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
@@ -510,8 +511,6 @@ tr:hover td{background:#FBFBFD;}
       <div class="map-page">
         <div id="map"></div>
         <div class="map-controls" id="map-controls">
-          <h3>🗺 Capas</h3>
-          <div id="map-legend"></div>
           <div class="map-canton-group">
             <label>Filtrar cantón</label>
             <select id="cantones-select" onchange="applyMapFiltersFull()"><option value="">Todos los cantones</option></select>
@@ -519,26 +518,26 @@ tr:hover td{background:#FBFBFD;}
 
           <div class="map-filter-group" id="fil-estado-group" style="display:none">
             <label class="group-title">📦 Estado de entrega</label>
-            <label class="filter-row"><input type="checkbox" id="fil-est-entregada" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#1F9D55"></span>Entregada</label>
-            <label class="filter-row"><input type="checkbox" id="fil-est-en_ruta" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#F47C20"></span>En ruta</label>
-            <label class="filter-row"><input type="checkbox" id="fil-est-pendiente" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#9AA4B8"></span>Pendiente</label>
-            <label class="filter-row"><input type="checkbox" id="fil-est-problema" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#EF4444"></span>Problema</label>
+            <label class="filter-row"><input type="checkbox" id="fil-est-entregada" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#1F9D55"></span>Entregada<span class="filter-count" id="cnt-est-entregada">0</span></label>
+            <label class="filter-row"><input type="checkbox" id="fil-est-en_ruta" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#F47C20"></span>En ruta<span class="filter-count" id="cnt-est-en_ruta">0</span></label>
+            <label class="filter-row"><input type="checkbox" id="fil-est-pendiente" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#9AA4B8"></span>Pendiente<span class="filter-count" id="cnt-est-pendiente">0</span></label>
+            <label class="filter-row"><input type="checkbox" id="fil-est-problema" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#EF4444"></span>Problema<span class="filter-count" id="cnt-est-problema">0</span></label>
           </div>
           <div class="map-filter-group">
             <label class="group-title">📋 Régimen</label>
-            <label class="filter-row"><input type="checkbox" id="fil-reg-SIERRA" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#0277BD"></span>Sierra</label>
-            <label class="filter-row"><input type="checkbox" id="fil-reg-COSTA" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#F9A825"></span>Costa</label>
+            <label class="filter-row"><input type="checkbox" id="fil-reg-SIERRA" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#0277BD"></span>Sierra<span class="filter-count" id="cnt-reg-SIERRA">0</span></label>
+            <label class="filter-row"><input type="checkbox" id="fil-reg-COSTA" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#F9A825"></span>Costa<span class="filter-count" id="cnt-reg-COSTA">0</span></label>
           </div>
           <div class="map-filter-group">
             <label class="group-title">🚗 Forma de acceso</label>
-            <label class="filter-row"><input type="checkbox" id="fil-acc-Terrestre" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#2E7D32"></span>Terrestre</label>
-            <label class="filter-row"><input type="checkbox" id="fil-acc-Fluvial" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#0277BD"></span>Fluvial</label>
-            <label class="filter-row"><input type="checkbox" id="fil-acc-Aérea" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#C62828"></span>Aérea</label>
+            <label class="filter-row"><input type="checkbox" id="fil-acc-Terrestre" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#2E7D32"></span>Terrestre<span class="filter-count" id="cnt-acc-Terrestre">0</span></label>
+            <label class="filter-row"><input type="checkbox" id="fil-acc-Fluvial" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#0277BD"></span>Fluvial<span class="filter-count" id="cnt-acc-Fluvial">0</span></label>
+            <label class="filter-row"><input type="checkbox" id="fil-acc-Aérea" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#C62828"></span>Aérea<span class="filter-count" id="cnt-acc-Aérea">0</span></label>
           </div>
           <div class="map-filter-group">
             <label class="group-title">🏙 Zona INEC</label>
-            <label class="filter-row"><input type="checkbox" id="fil-zin-Urbana" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#6A1B9A"></span>Urbana</label>
-            <label class="filter-row"><input type="checkbox" id="fil-zin-Rural" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#2E7D32"></span>Rural</label>
+            <label class="filter-row"><input type="checkbox" id="fil-zin-Urbana" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#6A1B9A"></span>Urbana<span class="filter-count" id="cnt-zin-Urbana">0</span></label>
+            <label class="filter-row"><input type="checkbox" id="fil-zin-Rural" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#2E7D32"></span>Rural<span class="filter-count" id="cnt-zin-Rural">0</span></label>
           </div>
           <div class="map-footer">
             <button onclick="resetMapFilters()">↺ Resetear</button>
@@ -1820,6 +1819,57 @@ function initSICMap(){
   renderMapMarkers();
 }
 
+
+/* Actualiza los contadores junto a cada filtro */
+function updateFilterCounts(){
+  const coordMap={};
+  MAP_SCHOOLS.forEach(s=>{coordMap[s.amie]=s;});
+
+  // Base source: SCHOOLS (Excel) si está cargado, MAP_SCHOOLS si no
+  const useSchools=SCHOOLS.length>0;
+
+  // Counters
+  const cEst={entregada:0,en_ruta:0,pendiente:0,problema:0};
+  const cReg={SIERRA:0,COSTA:0};
+  const cAcc={Terrestre:0,Fluvial:0,'Aérea':0};
+  const cZin={Urbana:0,Rural:0};
+
+  if(useSchools){
+    SCHOOLS.forEach(s=>{
+      const ref=coordMap[s.amie];
+      if(!ref)return;
+      const est=s.estado||'pendiente';
+      if(cEst[est]!==undefined)cEst[est]++;
+      const reg=ref.reg||'';
+      if(cReg[reg]!==undefined)cReg[reg]++;
+      const acc=s.acceso||ref.acc||'Terrestre';
+      if(cAcc[acc]!==undefined)cAcc[acc]++;
+      const zon=ref.zona||'';
+      if(cZin[zon]!==undefined)cZin[zon]++;
+    });
+  } else {
+    MAP_SCHOOLS.forEach(s=>{
+      if(cReg[s.reg]!==undefined)cReg[s.reg]++;
+      if(cAcc[s.acc]!==undefined)cAcc[s.acc]++;
+      if(cZin[s.zona]!==undefined)cZin[s.zona]++;
+    });
+  }
+
+  // Render counts
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v>0?v.toLocaleString('es-EC'):'—';};
+  set('cnt-est-entregada',cEst.entregada);
+  set('cnt-est-en_ruta',cEst.en_ruta);
+  set('cnt-est-pendiente',cEst.pendiente);
+  set('cnt-est-problema',cEst.problema);
+  set('cnt-reg-SIERRA',cReg.SIERRA);
+  set('cnt-reg-COSTA',cReg.COSTA);
+  set('cnt-acc-Terrestre',cAcc.Terrestre);
+  set('cnt-acc-Fluvial',cAcc.Fluvial);
+  set('cnt-acc-Aérea',cAcc['Aérea']);
+  set('cnt-zin-Urbana',cZin.Urbana);
+  set('cnt-zin-Rural',cZin.Rural);
+}
+
 /* Reconstruye marcadores: usa datos del Excel si existen, si no usa MAP_SCHOOLS estático */
 function renderMapMarkers(){
   if(!_mapObj)return;
@@ -1882,7 +1932,6 @@ function renderMapMarkers(){
       _layerGroups[prov]=group;
       _mapObj.addLayer(group);
     });
-    buildMapLegendEstado();
   } else {
     /* MODO ESTÁTICO: catálogo MAP_SCHOOLS sin datos de entrega */
     const estGrp2=document.getElementById('fil-estado-group');
@@ -1915,16 +1964,10 @@ function renderMapMarkers(){
   }
   updateMapCantonesSelect();
   updateMapCount();
+  updateFilterCounts();
 }
 
-/* Leyenda de estados (cuando hay datos del Excel) */
-function buildMapLegendEstado(){
-  const el=document.getElementById('map-legend');
-  if(!el)return;
-  const counts={entregada:0,en_ruta:0,pendiente:0,problema:0};
-  SCHOOLS.forEach(s=>{if(counts[s.estado]!==undefined)counts[s.estado]++;else counts.pendiente++;});
-  el.innerHTML=Object.keys(ESTADO_COLORS).map(e=>`<div class="map-legend-item"><span class="swatch" style="background:${ESTADO_COLORS[e]}"></span><span class="map-legend-label">${ESTADO_LABELS[e]}</span><span class="map-legend-count">${counts[e]||0}</span></div>`).join('');
-}
+/* buildMapLegendEstado removed — counts now in filter panel */
 
 function buildMapLegend(){
   const el=document.getElementById('map-legend');
