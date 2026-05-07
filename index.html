@@ -516,6 +516,11 @@ tr:hover td{background:#FBFBFD;}
             <select id="cantones-select" onchange="applyMapFiltersFull()"><option value="">Todos los cantones</option></select>
           </div>
 
+          <div class="map-filter-group">
+            <label class="group-title">🗺 Provincia</label>
+            <div id="map-legend"></div>
+          </div>
+
           <div class="map-filter-group" id="fil-estado-group" style="display:none">
             <label class="group-title">📦 Estado de entrega</label>
             <label class="filter-row"><input type="checkbox" id="fil-est-entregada" checked onchange="applyMapFiltersFull()"><span class="map-filter-row-dot" style="background:#1F9D55"></span>Entregada<span class="filter-count" id="cnt-est-entregada">0</span></label>
@@ -1904,6 +1909,7 @@ function renderMapMarkers(){
     });
 
     _activeProvinces=new Set(Object.keys(provGroups));
+    buildMapLegend();
 
     Object.keys(provGroups).forEach(prov=>{
       const provColor=MAP_PCOLORS[prov]||'#6B7280';
@@ -1973,13 +1979,20 @@ function buildMapLegend(){
   const el=document.getElementById('map-legend');
   if(!el)return;
   const counts={};
-  MAP_PROVINCES.forEach(p=>counts[p]=MAP_SCHOOLS.filter(s=>s.prov===p).length);
-  el.innerHTML=MAP_PROVINCES.map(prov=>`
+  const provs=SCHOOLS.length>0
+    ? [...new Set(SCHOOLS.map(s=>s.prov).filter(Boolean))].sort()
+    : MAP_PROVINCES;
+  if(SCHOOLS.length>0){
+    SCHOOLS.forEach(s=>{if(s.prov)counts[s.prov]=(counts[s.prov]||0)+1;});
+  } else {
+    MAP_PROVINCES.forEach(p=>counts[p]=MAP_SCHOOLS.filter(s=>s.prov===p).length);
+  }
+  el.innerHTML=provs.map(prov=>`
     <div class="map-legend-item" onclick="toggleMapProvince('${prov}')">
       <input type="checkbox" id="chk-${prov}" checked onchange="toggleMapProvince('${prov}')" onclick="event.stopPropagation()">
-      <span class="swatch" style="background:${MAP_PCOLORS[prov]}"></span>
+      <span class="swatch" style="background:${MAP_PCOLORS[prov]||'#6B7280'}"></span>
       <span class="map-legend-label">${prov.charAt(0)+prov.slice(1).toLowerCase()}</span>
-      <span class="map-legend-count">${counts[prov]}</span>
+      <span class="map-legend-count" style="font-size:10px;color:var(--gray-400);margin-left:auto">${counts[prov]||0}</span>
     </div>`).join('');
 }
 
