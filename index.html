@@ -1824,14 +1824,20 @@ function renderMapMarkers(){
     const coordMap={};
     MAP_SCHOOLS.forEach(s=>{coordMap[s.amie]=s;});
 
+    const {regs,accs,zins}=getActiveFilters();
     const provGroups={};
     SCHOOLS.forEach(s=>{
       const ref=coordMap[s.amie];
       if(!ref||!ref.lat||!ref.lon)return;
+      if(_activeCanton&&(s.canton||ref.canton)!==_activeCanton)return;
+      if(regs.length&&!regs.includes(ref.reg))return;
+      const accVal=s.acceso||ref.acc||'Terrestre';
+      if(accs.length&&!accs.includes(accVal))return;
+      if(zins.length&&!zins.includes(ref.zona))return;
       if(!provGroups[s.prov])provGroups[s.prov]=[];
       provGroups[s.prov].push({...s,lat:ref.lat,lon:ref.lon,
         name:ref.name||s.nombre||s.amie,
-        canton:s.canton||ref.canton,acc:s.acceso||ref.acc});
+        canton:s.canton||ref.canton,acc:accVal});
     });
 
     _activeProvinces=new Set(Object.keys(provGroups));
@@ -1874,7 +1880,13 @@ function renderMapMarkers(){
           return L.divIcon({html:`<div style="background:${color};color:#fff;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.3)">${cluster.getChildCount()}</div>`,className:'',iconSize:[34,34]});
         },showCoverageOnHover:false,maxClusterRadius:50
       });
-      MAP_SCHOOLS.filter(s=>s.prov===prov).forEach(s=>{
+      const {regs:fr,accs:fa,zins:fz}=getActiveFilters();
+      let staticFiltered=MAP_SCHOOLS.filter(s=>s.prov===prov);
+      if(_activeCanton)staticFiltered=staticFiltered.filter(s=>s.canton===_activeCanton);
+      if(fr.length)staticFiltered=staticFiltered.filter(s=>fr.includes(s.reg));
+      if(fa.length)staticFiltered=staticFiltered.filter(s=>fa.includes(s.acc));
+      if(fz.length)staticFiltered=staticFiltered.filter(s=>fz.includes(s.zona));
+      staticFiltered.forEach(s=>{
         const marker=L.circleMarker([s.lat,s.lon],{radius:6,fillColor:color,color:'#fff',weight:1.5,fillOpacity:0.85});
         const badge=s.acc==='Aérea'?'✈️ Aérea':s.acc==='Fluvial'?'🛶 Fluvial':'🚗 Terrestre';
         marker.bindPopup(`<div style="font-size:12px;min-width:200px"><div style="font-weight:800;color:#14213D;margin-bottom:6px;line-height:1.3">${s.name}</div><div style="color:#5C6478;font-size:11px;margin-bottom:4px">📍 ${s.canton} · Dist. ${s.parr}</div><div style="color:#5C6478;font-size:11px;margin-bottom:4px">${badge}</div></div>`);
@@ -1945,7 +1957,7 @@ function updateMapCantonesSelect(){
 function applyMapFilters(){
   const sel=document.getElementById('cantones-select');
   _activeCanton=sel?sel.value:'';
-  applyMapFiltersRebuild();
+  renderMapMarkers();
 }
 
 
@@ -1961,89 +1973,12 @@ function applyMapFiltersFull(){
   if(!_mapObj)return;
   const sel=document.getElementById('cantones-select');
   _activeCanton=sel?sel.value:'';
-  const {regs,accs,zins}=getActiveFilters();
-  MAP_PROVINCES.forEach(prov=>{
-    _mapObj.removeLayer(_layerGroups[prov]);
-    if(!_activeProvinces.has(prov))return;
-    const color=MAP_PCOLORS[prov];
-    const group=L.markerClusterGroup({
-      iconCreateFunction:function(cluster){
-        return L.divIcon({
-          html:`<div style="background:${color};color:#fff;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.3)">${cluster.getChildCount()}</div>`,
-          className:'',iconSize:[34,34]
-        });
-      },showCoverageOnHover:false,maxClusterRadius:50
-    });
-    let filtered=MAP_SCHOOLS.filter(s=>s.prov===prov);
-    if(_activeCanton)filtered=filtered.filter(s=>s.canton===_activeCanton);
-    filtered=filtered.filter(s=>regs.includes(s.reg)&&accs.includes(s.acc)&&zins.includes(s.zona));
-    filtered.forEach(s=>{
-      const marker=L.circleMarker([s.lat,s.lon],{radius:6,fillColor:color,color:'#fff',weight:1.5,fillOpacity:0.85});
-      const badge=s.acc==='Aérea'?'✈️ Aérea':s.acc==='Fluvial'?'🛶 Fluvial':'🚗 Terrestre';
-      marker.bindPopup(`
-        <div style="font-size:12px;min-width:200px">
-          <div style="font-weight:800;color:#14213D;margin-bottom:6px;line-height:1.3">${s.name}</div>
-          <div style="color:#5C6478;font-size:11px;margin-bottom:4px">📍 ${s.canton} · Dist. ${s.parr}</div>
-          <div style="color:#5C6478;font-size:11px;margin-bottom:4px">${badge} &nbsp;·&nbsp; ${s.zona} &nbsp;·&nbsp; ${s.reg}</div>
-          <div style="display:flex;gap:8px;margin-top:8px;font-size:10px">
-            <span style="background:#EEF1F7;border-radius:4px;padding:2px 6px">Inicial: ${s.inicial}</span>
-            <span style="background:#EEF1F7;border-radius:4px;padding:2px 6px">1°–7°: ${s.primaria}</span>
-            <span style="background:#EEF1F7;border-radius:4px;padding:2px 6px">8°–3°BGU: ${s.secundaria}</span>
-          </div>
-          <div style="margin-top:4px;font-size:10px;color:#666">Raciones: ${s.raciones.toLocaleString()}</div>
-        </div>
-      `);
-      marker._sicProv=prov; marker._sicCanton=s.canton;
-      group.addLayer(marker);
-    });
-    _layerGroups[prov]=group;
-    _mapObj.addLayer(group);
-  });
-  updateMapCount();
+  renderMapMarkers();
 }
 
 function applyMapFiltersRebuild(){
   if(!_mapObj)return;
-  MAP_PROVINCES.forEach(prov=>{
-    _mapObj.removeLayer(_layerGroups[prov]);
-    if(!_activeProvinces.has(prov))return;
-    const color=MAP_PCOLORS[prov];
-    const group=L.markerClusterGroup({
-      iconCreateFunction:function(cluster){
-        return L.divIcon({
-          html:`<div style="background:${color};color:#fff;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.3)">${cluster.getChildCount()}</div>`,
-          className:'',iconSize:[34,34]
-        });
-      },
-      showCoverageOnHover:false,maxClusterRadius:50
-    });
-    let filtered=MAP_SCHOOLS.filter(s=>s.prov===prov);
-    if(_activeCanton) filtered=filtered.filter(s=>s.canton===_activeCanton);
-    filtered.forEach(s=>{
-      const marker=L.circleMarker([s.lat,s.lon],{
-        radius:6,fillColor:color,color:'#fff',weight:1.5,fillOpacity:0.85
-      });
-      const badge=s.acc==='Aérea'?'✈️ Aérea':s.acc==='Fluvial'?'🛶 Fluvial':'🚗 Terrestre';
-      marker.bindPopup(`
-        <div style="font-size:12px;min-width:200px">
-          <div style="font-weight:800;color:#14213D;margin-bottom:6px;line-height:1.3">${s.name}</div>
-          <div style="color:#5C6478;font-size:11px;margin-bottom:4px">📍 ${s.canton} · Dist. ${s.parr}</div>
-          <div style="color:#5C6478;font-size:11px;margin-bottom:4px">${badge}</div>
-          <div style="display:flex;gap:8px;margin-top:8px;font-size:10px">
-            <span style="background:#EEF1F7;border-radius:4px;padding:2px 6px">Inicial: ${s.inicial}</span>
-            <span style="background:#EEF1F7;border-radius:4px;padding:2px 6px">1°–7°: ${s.primaria}</span>
-            <span style="background:#EEF1F7;border-radius:4px;padding:2px 6px">8°–3°BGU: ${s.secundaria}</span>
-          </div>
-        </div>
-      `);
-      marker._sicProv=prov;
-      marker._sicCanton=s.canton;
-      group.addLayer(marker);
-    });
-    _layerGroups[prov]=group;
-    _mapObj.addLayer(group);
-  });
-  updateMapCount();
+  renderMapMarkers();
 }
 
 function resetMapFilters(){
@@ -2059,14 +1994,10 @@ function resetMapFilters(){
 function updateMapCount(){
   const el=document.getElementById('map-count-bar');
   if(!el)return;
+  // Count the markers actually visible (sum all layers)
   let count=0;
-  const {regs,accs,zins}=getActiveFilters();
-  MAP_PROVINCES.forEach(prov=>{
-    if(!_activeProvinces.has(prov))return;
-    let filtered=MAP_SCHOOLS.filter(s=>s.prov===prov);
-    if(_activeCanton)filtered=filtered.filter(s=>s.canton===_activeCanton);
-    filtered=filtered.filter(s=>regs.includes(s.reg)&&accs.includes(s.acc)&&zins.includes(s.zona));
-    count+=filtered.length;
+  Object.values(_layerGroups).forEach(g=>{
+    try{count+=g.getLayers().length;}catch(e){}
   });
   el.textContent=count.toLocaleString('es-EC')+' instituciones';
 }
